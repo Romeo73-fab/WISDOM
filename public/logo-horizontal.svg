@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100">
+  <g transform="translate(20, 20)">
+    <!-- WISDOM text in white with Orange Dot over I -->
+    <!-- W -->
+    <path d="M 10 25 L 25 70 L 40 40 L 55 70 L 70 25" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- I with orange dot above -->
+    <line x1="95" y1="35" x2="95" y2="70" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="95" cy="16" r="8" fill="#F59E0B"/>
+    <!-- S -->
+    <path d="M 145 32 C 145 25, 120 22, 120 35 C 120 50, 145 45, 145 60 C 145 72, 120 70, 118 63" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"/>
+    <!-- D -->
+    <path d="M 170 25 L 170 70 M 170 25 C 205 25, 205 70, 170 70" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- O -->
+    <circle cx="235" cy="47.5" r="21" fill="none" stroke="#FFFFFF" stroke-width="10"/>
+    <!-- M -->
+    <path d="M 275 70 L 275 25 L 295 52 L 315 25 L 315 70" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

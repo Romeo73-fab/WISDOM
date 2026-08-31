@@ -1,0 +1,6 @@
+{
+  "name": "WISDOM — Application Officielle",
+  "description": "Application officielle de la marque WISDOM. Mode Streetwear & Coton 100% béninois, personnalisation sur mesure (Wisdom Lab) et livraison au Bénin et à l'International.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
