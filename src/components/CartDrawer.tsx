@@ -16,13 +16,14 @@ import {
 } from 'lucide-react';
 import { CartItem, Product, User, PromoCode } from '../types';
 import { BENIN_CITIES, LOYALTY_RULES } from '../data/initialData';
+import { sanitizeImageUrl, handleImageError, DEFAULT_BLACK_SHIRT } from '../utils/imageHelpers';
 
 interface CartDrawerProps {
   isOpen: boolean;
   cart: CartItem[];
   products: Product[];
   currentUser: User | null;
-  promos: PromoCode[];
+  promos?: PromoCode[];
   fedapayLink: string;
   whatsappNumber: string;
   onClose: () => void;
@@ -47,10 +48,10 @@ interface CartDrawerProps {
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
   isOpen,
-  cart,
-  products,
+  cart = [],
+  products = [],
   currentUser,
-  promos,
+  promos = [],
   fedapayLink,
   whatsappNumber,
   onClose,
@@ -62,7 +63,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const [selectedCity, setSelectedCity] = useState(BENIN_CITIES[0].name);
+  const safePromos = Array.isArray(promos) ? promos : [];
+  const safeCart = Array.isArray(cart) ? cart.filter(Boolean) : [];
+  const safeProducts = Array.isArray(products) ? products : [];
+
+  const [selectedCity, setSelectedCity] = useState(BENIN_CITIES[0]?.name || 'Cotonou');
   const [deliveryAddress, setDeliveryAddress] = useState(currentUser?.address || '');
   const [phone, setPhone] = useState(currentUser?.phone || '');
   const [customerName, setCustomerName] = useState(currentUser?.name || '');
@@ -78,14 +83,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   // Loyalty Points State
   const [useLoyaltyPoints, setUseLoyaltyPoints] = useState(false);
 
-  const currentCityObj = BENIN_CITIES.find((c) => c.name === selectedCity) || BENIN_CITIES[0];
+  const currentCityObj = BENIN_CITIES.find((c) => c.name === selectedCity) || BENIN_CITIES[0] || { name: 'Cotonou', fee: 1000, delay: '24h' };
   let baseDeliveryFee = currentCityObj.fee;
 
   // Calculate items subtotal
-  const subtotal = cart.reduce((sum, item) => {
-    const product = products.find((p) => p.id === item.productId);
-    const price = product ? product.price : 5000;
-    return sum + price * item.quantity;
+  const subtotal = safeCart.reduce((sum, item) => {
+    const product = safeProducts.find((p) => p.id === item.productId);
+    const price = product ? Number(product.price) || 0 : 5000;
+    const qty = Number(item.quantity) || 1;
+    return sum + price * qty;
   }, 0);
 
   // Calculate promo discount
@@ -125,7 +131,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
       return;
     }
 
-    const found = promos.find((p) => p.code.toUpperCase() === targetCode && p.active);
+    const found = safePromos.find((p) => p && p.code && p.code.toUpperCase() === targetCode && p.active);
     if (!found) {
       setPromoError('Code promo introuvable ou inactif.');
       return;
@@ -238,7 +244,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     }
   };
 
-  const publicPromos = promos.filter((p) => p.active && p.isPublicBanner);
+  const publicPromos = safePromos.filter((p) => p && p.active && p.isPublicBanner);
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
@@ -294,9 +300,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         const product = products.find((p) => p.id === item.productId);
                         const name = product ? product.name : 'Tee-shirt Personnalisé';
                         const price = product ? product.price : 5000;
-                        const image =
-                          product?.image ||
-                          '/assets/images/wisdom_black_shirt_1786398483035.jpg';
+                        const image = sanitizeImageUrl(
+                          product?.image,
+                          DEFAULT_BLACK_SHIRT
+                        );
 
                         return (
                           <div
@@ -305,7 +312,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                           >
                             <img
                               src={image}
-                              alt=""
+                              alt={name}
+                              onError={(e) => handleImageError(e, DEFAULT_BLACK_SHIRT)}
                               className="w-14 h-18 object-cover rounded-xl bg-stone-900 flex-shrink-0"
                               referrerPolicy="no-referrer"
                             />

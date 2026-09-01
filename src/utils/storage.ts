@@ -6,6 +6,13 @@ import {
   syncSettingsToSupabase,
   syncReviewToSupabase,
 } from './supabaseService';
+import {
+  sanitizeImageUrl,
+  DEFAULT_BLACK_SHIRT,
+  DEFAULT_HERO_BANNER,
+  DEFAULT_SLEEVE_PATCH,
+  DEFAULT_CHEST_LOGO,
+} from './imageHelpers';
 
 // Storage and API wrapper with persistent backend & LocalStorage fallback
 export const PRODUCTS_KEY = 'wisdom-products-v3';
@@ -62,12 +69,20 @@ export async function fetchServerStoreData(isBackground = false) {
   }
 
   // 3. Merge products, orders, users, reviews
-  const finalProducts =
+  const rawProducts =
     supabaseResult?.products && supabaseResult.products.length > 0
       ? supabaseResult.products
       : serverResult?.products && serverResult.products.length > 0
       ? serverResult.products
       : undefined;
+
+  const finalProducts = rawProducts?.map((p: any) => ({
+    ...p,
+    image: sanitizeImageUrl(p.image, DEFAULT_BLACK_SHIRT),
+    gallery: Array.isArray(p.gallery) && p.gallery.length > 0
+      ? p.gallery.map((g: string) => sanitizeImageUrl(g, DEFAULT_BLACK_SHIRT))
+      : [sanitizeImageUrl(p.image, DEFAULT_BLACK_SHIRT)],
+  }));
 
   const finalOrders =
     supabaseResult?.orders && supabaseResult.orders.length > 0

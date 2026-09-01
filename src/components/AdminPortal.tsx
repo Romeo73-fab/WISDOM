@@ -39,6 +39,8 @@ import {
   X,
   UserCheck,
   UserX,
+  Smartphone,
+  Monitor,
 } from 'lucide-react';
 import { Product, Order, User, StoreSettings } from '../types';
 import { BENIN_CITIES } from '../data/initialData';
@@ -179,6 +181,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   const [localSettings, setLocalSettings] = useState<StoreSettings>({ ...settings });
   const [isSavingLogo, setIsSavingLogo] = useState<boolean>(false);
   const [logoSavedSuccess, setLogoSavedSuccess] = useState<boolean>(false);
+  const [isSavingAppIcon, setIsSavingAppIcon] = useState<boolean>(false);
+  const [appIconSavedSuccess, setAppIconSavedSuccess] = useState<boolean>(false);
   const [isSavingBanner, setIsSavingBanner] = useState<boolean>(false);
   const [bannerSavedSuccess, setBannerSavedSuccess] = useState<boolean>(false);
 
@@ -358,6 +362,121 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
     addSupabaseLog('info', 'Logo réinitialisé au visuel officiel standard /logo-wisdom.png');
     onShowToast('Logo réinitialisé au visuel officiel standard (/logo-wisdom.png) et sauvegardé dans la base');
     setTimeout(() => setLogoSavedSuccess(false), 3000);
+  };
+
+  // Handle Dedicated App Icon (Desktop & Mobile Home Screen PWA) Upload
+  const handleAppIconUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsSavingAppIcon(true);
+    setAppIconSavedSuccess(false);
+    onShowToast('Préparation et optimisation de l\'icône de l\'application (Bureau & Mobile)...');
+
+    try {
+      // 1. Crop and square the icon
+      const { dataUrl: croppedDataUrl, croppedFile } = await autoCropLogo(file, 0.04);
+      const fileToUpload = croppedFile || file;
+
+      // 2. Upload to Supabase Storage
+      let targetUrl = croppedDataUrl;
+      try {
+        const { url: sbUrl, isRemote } = await uploadMediaToSupabase(fileToUpload, 'brand');
+        if (sbUrl && isRemote) {
+          targetUrl = sbUrl;
+        }
+      } catch (sbErr) {
+        console.warn('Supabase app icon upload fallback:', sbErr);
+      }
+
+      // 3. Persist to backend server disk (/public/app-icon.png, /public/pwa-*.png) and database
+      try {
+        const res = await fetch('/api/upload-app-icon', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dataUrl: croppedDataUrl, appIconUrl: targetUrl }),
+        });
+        if (res.ok) {
+          const sJson = await res.json();
+          if (sJson.appIconUrl) {
+            targetUrl = sJson.appIconUrl;
+          }
+        }
+      } catch (srvErr) {
+        console.warn('Server upload-app-icon fallback:', srvErr);
+      }
+
+      const updated = { ...localSettings, appIconUrl: targetUrl };
+      setLocalSettings(updated);
+      onSaveSettings(updated);
+      await syncSettingsToSupabase(updated);
+
+      setUploadedFiles((prev) => [
+        { name: file.name, url: targetUrl, date: new Date().toLocaleTimeString('fr-FR'), isRemote: targetUrl.startsWith('http') },
+        ...prev,
+      ]);
+
+      setAppIconSavedSuccess(true);
+      addSupabaseLog('success', `💾 Nouvelle icône d'application (Bureau & Écran d'accueil) enregistrée dans la base : ${file.name}`);
+      onShowToast('✨ Icône d\'application (Bureau & Mobile) enregistrée dans la base de données avec succès !');
+      setTimeout(() => setAppIconSavedSuccess(false), 5000);
+    } catch (err: any) {
+      onShowToast(`Erreur icône: ${err.message}`);
+      addSupabaseLog('error', `Erreur téléversement icône: ${err.message}`);
+    } finally {
+      setIsSavingAppIcon(false);
+      e.target.value = '';
+    }
+  };
+
+  // Explicitly Save App Icon to Database
+  const handleSaveAppIconToDatabase = async () => {
+    setIsSavingAppIcon(true);
+    setAppIconSavedSuccess(false);
+    try {
+      let activeIcon = localSettings.appIconUrl || localSettings.logoUrl || '/logo-wisdom.png';
+
+      if (activeIcon.startsWith('data:image')) {
+        try {
+          const res = await fetch('/api/upload-app-icon', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dataUrl: activeIcon }),
+          });
+          if (res.ok) {
+            const sJson = await res.json();
+            if (sJson.appIconUrl) activeIcon = sJson.appIconUrl;
+          }
+        } catch (e) {}
+      }
+
+      const updated = { ...localSettings, appIconUrl: activeIcon };
+      setLocalSettings(updated);
+      onSaveSettings(updated);
+      await syncSettingsToSupabase(updated);
+
+      setAppIconSavedSuccess(true);
+      addSupabaseLog('success', `💾 Icône de l'application enregistrée avec succès dans la base de données : ${updated.appIconUrl}`);
+      onShowToast('✨ Icône d\'application enregistrée dans la base de données !');
+      setTimeout(() => setAppIconSavedSuccess(false), 5000);
+    } catch (err: any) {
+      onShowToast(`Erreur d'enregistrement : ${err.message}`);
+      addSupabaseLog('error', `Erreur enregistrement icône: ${err.message}`);
+    } finally {
+      setIsSavingAppIcon(false);
+    }
+  };
+
+  // Reset to default App Icon
+  const handleResetAppIcon = async () => {
+    const updated = { ...localSettings, appIconUrl: '/logo-wisdom.png' };
+    setLocalSettings(updated);
+    onSaveSettings(updated);
+    await syncSettingsToSupabase(updated);
+    setAppIconSavedSuccess(true);
+    addSupabaseLog('info', 'Icône d\'application réinitialisée au visuel officiel standard /logo-wisdom.png');
+    onShowToast('Icône réinitialisée au standard (/logo-wisdom.png) et enregistrée dans la base');
+    setTimeout(() => setAppIconSavedSuccess(false), 3000);
   };
 
   // Handle Product Image Upload
@@ -1161,6 +1280,187 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
                     >
                       Copier
                     </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ========================================================================= */}
+            {/* DEDICATED APP ICON SECTION (BUREAU / DESKTOP & MOBILE HOME SCREEN) */}
+            {/* ========================================================================= */}
+            <div className="pt-6 border-t border-stone-800 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h4 className="font-serif text-xl font-bold text-stone-100 flex items-center gap-2.5">
+                    <Smartphone className="w-5 h-5 text-amber-400" />
+                    <span>Icône de l'Application (Bureau PC & Écran d'Accueil Mobile)</span>
+                  </h4>
+                  <p className="text-xs font-mono text-stone-400 mt-1">
+                    Définissez l'icône officielle qui s'affichera sur le bureau de l'ordinateur et l'écran d'accueil des téléphones après installation.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleResetAppIcon}
+                    className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-mono rounded-xl border border-stone-700 transition-colors flex items-center gap-1.5"
+                    title="Réinitialiser l'icône d'application par défaut"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Icône Standard</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Live Preview Cards for App Icon */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Desktop PWA Preview */}
+                <div className="bg-stone-950 border border-amber-400/40 rounded-2xl p-5 flex flex-col items-center justify-center text-center space-y-3 shadow-lg shadow-amber-400/5">
+                  <span className="text-[11px] font-mono text-amber-400 uppercase tracking-wider font-semibold flex items-center gap-1">
+                    <Monitor className="w-3.5 h-3.5" />
+                    1. Bureau PC / Mac
+                  </span>
+                  <div className="h-24 w-full flex items-center justify-center">
+                    <div className="w-18 h-18 rounded-[20px] bg-black border border-stone-700 shadow-2xl flex items-center justify-center p-3 ring-2 ring-amber-400/30">
+                      <LogoImage
+                        src={localSettings.appIconUrl || localSettings.logoUrl}
+                        alt="Icône Bureau PWA"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] font-mono text-stone-400">
+                    Format 512x512 haute netteté
+                  </p>
+                </div>
+
+                {/* Mobile Home Screen Preview */}
+                <div className="bg-stone-950 border border-stone-800 rounded-2xl p-5 flex flex-col items-center justify-center text-center space-y-3">
+                  <span className="text-[11px] font-mono text-stone-300 uppercase tracking-wider font-semibold flex items-center gap-1">
+                    <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+                    2. Smartphone iOS & Android
+                  </span>
+                  <div className="h-24 w-full flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-[18px] bg-black border border-stone-800 shadow-xl flex items-center justify-center p-2.5 ring-1 ring-amber-400/20">
+                      <LogoImage
+                        src={localSettings.appIconUrl || localSettings.logoUrl}
+                        alt="Icône Smartphone"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] font-mono text-stone-400">
+                    Format tactile 192x192
+                  </p>
+                </div>
+
+                {/* Tab / Favicon Preview */}
+                <div className="bg-stone-950 border border-stone-800 rounded-2xl p-5 flex flex-col items-center justify-center text-center space-y-3">
+                  <span className="text-[11px] font-mono text-stone-300 uppercase tracking-wider font-semibold flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    3. Onglet & Favicon
+                  </span>
+                  <div className="h-24 w-full flex items-center justify-center">
+                    <div className="px-3 py-1.5 bg-stone-900 rounded-lg border border-stone-700 flex items-center gap-2 shadow-sm">
+                      <div className="w-5 h-5 rounded bg-black flex items-center justify-center p-0.5 border border-amber-400/30">
+                        <LogoImage
+                          src={localSettings.appIconUrl || localSettings.logoUrl}
+                          alt="Favicon"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <span className="text-xs font-mono text-stone-200">WISDOM — Officiel</span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] font-mono text-stone-400">
+                    Barre d'adresse & raccourcis
+                  </p>
+                </div>
+              </div>
+
+              {/* Upload Zone for App Icon */}
+              <div className="p-6 bg-stone-950/70 border-2 border-dashed border-amber-400/40 rounded-2xl space-y-5">
+                <div className="text-center space-y-1.5">
+                  <div className="w-10 h-10 rounded-full bg-amber-400/10 text-amber-400 flex items-center justify-center mx-auto">
+                    <Upload className="w-5 h-5" />
+                  </div>
+                  <p className="font-serif font-bold text-stone-100 text-sm sm:text-base">
+                    Téléverser l'Icône de l'Application (Bureau & Écran d'Accueil)
+                  </p>
+                  <p className="text-xs font-mono text-stone-400">
+                    L'image sera automatiquement optimisée, enregistrée dans la base de données et intégrée au manifeste PWA.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                  <label className="px-5 py-3.5 bg-amber-400 hover:bg-amber-300 text-stone-950 font-mono text-xs font-black rounded-xl cursor-pointer transition-all flex items-center gap-2 shadow-lg shadow-amber-400/20 active:scale-95">
+                    <Upload className="w-4 h-4" />
+                    <span>{isSavingAppIcon ? 'Traitement en cours...' : '1. Choisir l\'icône d\'application'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={isSavingAppIcon}
+                      className="hidden"
+                      onChange={handleAppIconUpload}
+                    />
+                  </label>
+
+                  <button
+                    onClick={handleSaveAppIconToDatabase}
+                    disabled={isSavingAppIcon}
+                    className="px-5 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-mono text-xs font-black rounded-xl cursor-pointer transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
+                    title="Sauvegarder l'icône d'application dans la base de données"
+                  >
+                    {isSavingAppIcon ? (
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    <span>2. Enregistrer l'Icône dans la Base de Données</span>
+                  </button>
+                </div>
+
+                {/* Direct App Icon URL Input */}
+                <div className="pt-3 border-t border-stone-800 text-left bg-stone-900/80 p-4 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono text-stone-300 font-bold flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      URL de l'Icône de l'Application :
+                    </span>
+                    <span className="text-[10px] font-mono text-stone-500">
+                      Modifiable manuellement ci-dessous
+                    </span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <input
+                      type="text"
+                      value={localSettings.appIconUrl || ''}
+                      onChange={(e) => {
+                        const newUrl = e.target.value;
+                        const updated = { ...localSettings, appIconUrl: newUrl };
+                        setLocalSettings(updated);
+                        onSaveSettings(updated);
+                      }}
+                      placeholder="Ex: /app-icon.png ou /logo-wisdom.png ou https://..."
+                      className="flex-1 bg-stone-950 text-amber-300 text-xs font-mono px-3.5 py-2.5 rounded-lg border border-stone-700 focus:border-amber-400 focus:outline-none"
+                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={handleSaveAppIconToDatabase}
+                        disabled={isSavingAppIcon}
+                        className="px-3.5 py-2.5 bg-amber-400 hover:bg-amber-300 text-stone-950 text-xs font-mono font-bold rounded-lg cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm"
+                        title="Enregistrer cette URL dans la base de données"
+                      >
+                        <Save className="w-3.5 h-3.5" />
+                        <span>Enregistrer</span>
+                      </button>
+                      <button
+                        onClick={() => handleCopy(localSettings.appIconUrl || '', 'de l\'icône')}
+                        className="px-3.5 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-mono rounded-lg cursor-pointer transition-colors"
+                        title="Copier le lien de l'icône"
+                      >
+                        Copier
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

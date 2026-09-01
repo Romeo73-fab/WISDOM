@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Product, CartItem, Order, User, StoreSettings, Review } from './types';
+import { Product, CartItem, Order, User, StoreSettings, Review, PromoCode } from './types';
 import {
   DEFAULT_PRODUCTS,
   DEFAULT_SETTINGS,
+  DEFAULT_PROMOS,
   INITIAL_REVIEWS,
   DEFAULT_WHATSAPP,
 } from './data/initialData';
@@ -15,6 +16,7 @@ import {
   saveServerUsers,
   saveServerSettings,
   saveServerReviews,
+  saveServerPromos,
   sha256,
   PRODUCTS_KEY,
   USERS_KEY,
@@ -22,6 +24,7 @@ import {
   SETTINGS_KEY,
   WISHLIST_KEY,
   CART_KEY,
+  PROMOS_KEY,
 } from './utils/storage';
 
 import { Header } from './components/Header';
@@ -41,6 +44,8 @@ import { SizeGuideModal } from './components/SizeGuideModal';
 import { UserProfile } from './components/UserProfile';
 import { Footer } from './components/Footer';
 import { Toast } from './components/Toast';
+import { InstallNotificationBar } from './components/InstallNotificationBar';
+import { InstallAppModal } from './components/InstallAppModal';
 import {
   getCurrentActiveUser,
   signOutFromSupabase,
@@ -64,11 +69,12 @@ export default function App() {
     return DEFAULT_SETTINGS;
   });
   const [reviews, setReviews] = useState<Review[]>(INITIAL_REVIEWS);
+  const [promos, setPromos] = useState<PromoCode[]>(DEFAULT_PROMOS);
 
-  // Sync browser favicon and web app manifest whenever logoUrl is updated
+  // Sync browser favicon and web app manifest whenever logoUrl or appIconUrl is updated
   useEffect(() => {
-    updateAppIconsAndManifest(settings.logoUrl);
-  }, [settings.logoUrl]);
+    updateAppIconsAndManifest(settings.logoUrl, settings.appIconUrl);
+  }, [settings.logoUrl, settings.appIconUrl]);
 
   // User State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -85,6 +91,7 @@ export default function App() {
   const [isWishlistOpen, setIsWishlistOpen] = useState<boolean>(false);
   const [isAuthOpen, setIsAuthOpen] = useState<boolean>(false);
   const [isSizeGuideOpen, setIsSizeGuideOpen] = useState<boolean>(false);
+  const [isInstallModalOpen, setIsInstallModalOpen] = useState<boolean>(false);
 
   // Toast Notification
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -120,6 +127,10 @@ export default function App() {
         if (serverData.reviews) {
           setReviews(serverData.reviews);
         }
+        if (serverData.promos && serverData.promos.length > 0) {
+          setPromos(serverData.promos);
+          setItem(PROMOS_KEY, serverData.promos);
+        }
       } else {
         // Fallback to local storage if offline
         const loadedProds = await getItem<Product[]>(PRODUCTS_KEY, DEFAULT_PRODUCTS);
@@ -133,13 +144,26 @@ export default function App() {
 
         const loadedSettings = await getItem<StoreSettings>(SETTINGS_KEY, DEFAULT_SETTINGS);
         setSettings(loadedSettings);
+
+        const loadedPromos = await getItem<PromoCode[]>(PROMOS_KEY, DEFAULT_PROMOS);
+        setPromos(loadedPromos);
       }
 
       const loadedWishlist = await getItem<string[]>(WISHLIST_KEY, []);
-      setWishlist(loadedWishlist);
+      const sanitizedWishlist = Array.isArray(loadedWishlist)
+        ? Array.from(new Set(loadedWishlist.filter((id) => typeof id === 'string' && id.trim().length > 0)))
+        : [];
+      setWishlist(sanitizedWishlist);
 
       const loadedCart = await getItem<CartItem[]>(CART_KEY, []);
-      setCart(loadedCart);
+      const sanitizedCart = Array.isArray(loadedCart)
+        ? loadedCart
+            .filter(
+              (item) => item && typeof item === 'object' && typeof item.productId === 'string' && Number(item.quantity) > 0
+            )
+            .map((item) => ({ ...item, quantity: Number(item.quantity) || 1 }))
+        : [];
+      setCart(sanitizedCart);
     }
 
     loadAllData();
@@ -195,8 +219,9 @@ export default function App() {
     saveServerSettings(updatedSettings);
   };
 
-  // Wishlist Logic
+  // Wishlist Logic - Bulletproof against double increments
   const handleToggleWishlist = (productId: string) => {
+    if (!productId || typeof productId !== 'string') return;
     setWishlist((prev) => {
       const exists = prev.includes(productId);
       const next = exists ? prev.filter((id) => id !== productId) : [...prev, productId];
@@ -206,13 +231,16 @@ export default function App() {
     });
   };
 
-  // Cart Logic
+  // Cart Logic - Pure immutable updates, no phantom counts
   const handleAddToCart = (
     product: Product,
     size: string = 'L',
     color: string = 'Noir',
     qty: number = 1
   ) => {
+    if (!product || !product.id) return;
+    const validQty = Math.max(1, Number(qty) || 1);
+
     setCart((prev) => {
       const existingIdx = prev.findIndex(
         (item) => item.productId === product.id && item.size === size && item.color === color
@@ -220,13 +248,14 @@ export default function App() {
 
       let nextCart: CartItem[];
       if (existingIdx > -1) {
-        nextCart = [...prev];
-        nextCart[existingIdx].quantity += qty;
+        nextCart = prev.map((item, idx) =>
+          idx === existingIdx ? { ...item, quantity: item.quantity + validQty } : item
+        );
       } else {
         const newItem: CartItem = {
-          id: 'cart-' + Date.now() + Math.random().toString().slice(2, 6),
+          id: 'cart-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
           productId: product.id,
-          quantity: qty,
+          quantity: validQty,
           size,
           color,
         };
@@ -248,11 +277,15 @@ export default function App() {
     customFont: string;
     customColor: string;
     customPrintSide: 'front' | 'back';
+    customZipName?: string;
+    quantity?: number;
   }) => {
+    if (!customData || !customData.product) return;
+    const qty = Math.max(1, Number(customData.quantity) || 1);
     const newItem: CartItem = {
-      id: 'custom-' + Date.now(),
+      id: 'custom-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
       productId: customData.product.id,
-      quantity: 1,
+      quantity: qty,
       size: customData.size,
       color: customData.color,
       customText: customData.customText,
@@ -403,12 +436,21 @@ export default function App() {
       {/* Toast Notification Container */}
       <Toast message={toastMsg} type={toastType} onClose={() => setToastMsg(null)} />
 
+      {/* Top PWA Application Installation Notification Banner */}
+      <InstallNotificationBar
+        logoUrl={settings.logoUrl}
+        appIconUrl={settings.appIconUrl}
+        onOpenInstallModal={() => setIsInstallModalOpen(true)}
+        onShowToast={showToast}
+      />
+
       {/* Main Header */}
       <Header
         currentUser={currentUser}
         logoUrl={settings.logoUrl}
+        appIconUrl={settings.appIconUrl}
         wishlistCount={wishlist.length}
-        cartCount={cart.reduce((s, c) => s + c.quantity, 0)}
+        cartCount={cart.reduce((s, c) => s + (Number(c.quantity) || 0), 0)}
         activeTab={activeTab}
         setActiveTab={(tab) => {
           setSelectedProduct(null);
@@ -586,6 +628,7 @@ export default function App() {
         cart={cart}
         products={products}
         currentUser={currentUser}
+        promos={promos}
         fedapayLink={settings.fedapayLink}
         whatsappNumber={settings.whatsappNumber}
         onClose={() => setIsCartOpen(false)}
@@ -630,6 +673,13 @@ export default function App() {
       <SizeGuideModal
         isOpen={isSizeGuideOpen}
         onClose={() => setIsSizeGuideOpen(false)}
+      />
+
+      <InstallAppModal
+        isOpen={isInstallModalOpen}
+        logoUrl={settings.logoUrl}
+        appIconUrl={settings.appIconUrl}
+        onClose={() => setIsInstallModalOpen(false)}
       />
     </div>
   );

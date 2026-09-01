@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Heart, ShoppingBag, Star, ShieldCheck, Truck, RotateCcw, Sparkles, Check, ChevronRight, Play, Film } from 'lucide-react';
 import { Product, Review } from '../types';
 import { COLOR_SWATCHES, ALL_SIZES } from '../data/initialData';
+import { sanitizeImageUrl, handleImageError, DEFAULT_BLACK_SHIRT } from '../utils/imageHelpers';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -28,7 +29,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 }) => {
   if (!product) return null;
 
-  const images = [product.image, ...(product.gallery || [])].filter(Boolean);
+  const rawImages = [product.image, ...(product.gallery || [])].filter(Boolean);
+  const images = (rawImages.length > 0 ? rawImages : [DEFAULT_BLACK_SHIRT]).map((img) =>
+    sanitizeImageUrl(img, DEFAULT_BLACK_SHIRT)
+  );
   const hasVideo = Boolean(product.videoUrl);
   
   // Media items: if hasVideo, item 0 can be activeVideo or gallery items
@@ -129,6 +133,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     <img
                       src={images[activeImgIndex]}
                       alt={product.name}
+                      onError={(e) => handleImageError(e, DEFAULT_BLACK_SHIRT)}
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 drop-shadow-lg"
                       referrerPolicy="no-referrer"
                     />
@@ -198,7 +203,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                           : 'border-stone-800 opacity-60 hover:opacity-100'
                       }`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                      <img
+                        src={img}
+                        alt=""
+                        onError={(e) => handleImageError(e, DEFAULT_BLACK_SHIRT)}
+                        className="w-full h-full object-contain"
+                        referrerPolicy="no-referrer"
+                      />
                       <span className="absolute bottom-0 right-0 bg-stone-950/90 text-amber-400 font-mono text-[9px] px-1 font-bold">
                         #{idx + 1}
                       </span>
@@ -445,6 +456,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           <img
             src={images[activeImgIndex]}
             alt={product.name}
+            onError={(e) => handleImageError(e, DEFAULT_BLACK_SHIRT)}
             className="max-w-full max-h-[90vh] object-contain rounded-2xl"
             referrerPolicy="no-referrer"
           />

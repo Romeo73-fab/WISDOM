@@ -7,6 +7,7 @@ import { LogoImage } from './LogoImage';
 interface HeaderProps {
   currentUser: UserType | null;
   logoUrl?: string;
+  appIconUrl?: string;
   wishlistCount: number;
   cartCount: number;
   activeTab: string;
@@ -23,6 +24,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   currentUser,
   logoUrl,
+  appIconUrl,
   wishlistCount,
   cartCount,
   activeTab,
@@ -333,6 +335,7 @@ export const Header: React.FC<HeaderProps> = ({
       <InstallAppModal
         isOpen={showInstallModal}
         logoUrl={logoUrl}
+        appIconUrl={appIconUrl}
         onClose={() => setShowInstallModal(false)}
       />
     </>

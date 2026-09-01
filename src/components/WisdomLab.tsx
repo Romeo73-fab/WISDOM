@@ -92,18 +92,17 @@ export const WisdomLab: React.FC<WisdomLabProps> = ({ onAddToCart }) => {
       customisable: true,
     };
 
-    for (let i = 0; i < quantity; i++) {
-      onAddToCart({
-        product: customProduct,
-        size: selectedSize,
-        color: shirtColor,
-        customText,
-        customFont: selectedFont,
-        customColor: printColor,
-        customPrintSide: printSide,
-        customZipName: zipFile ? zipFile.name : undefined,
-      });
-    }
+    onAddToCart({
+      product: customProduct,
+      size: selectedSize,
+      color: shirtColor,
+      customText,
+      customFont: selectedFont,
+      customColor: printColor,
+      customPrintSide: printSide,
+      customZipName: zipFile ? zipFile.name : undefined,
+      quantity,
+    });
   };
 
   return (

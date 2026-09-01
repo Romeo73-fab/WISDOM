@@ -2,6 +2,7 @@ import React from 'react';
 import { Heart, ShoppingBag, Sparkles, SlidersHorizontal } from 'lucide-react';
 import { Product } from '../types';
 import { COLOR_SWATCHES } from '../data/initialData';
+import { sanitizeImageUrl, handleImageError, DEFAULT_BLACK_SHIRT } from '../utils/imageHelpers';
 
 interface ProductCardProps {
   product: Product;
@@ -18,6 +19,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onAddToCart,
   onSelectProduct,
 }) => {
+  const displayImage = sanitizeImageUrl(product.image, DEFAULT_BLACK_SHIRT);
+
   return (
     <div className="group relative bg-stone-900 border border-stone-800 hover:border-amber-400/50 rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-amber-500/10 flex flex-col justify-between">
       {/* Product Image & Badges */}
@@ -25,30 +28,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         onClick={() => onSelectProduct(product)}
         className="relative aspect-[4/5] bg-stone-950 overflow-hidden cursor-pointer"
       >
-        {product.image ? (
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-            referrerPolicy="no-referrer"
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-stone-900/90 p-6 relative group-hover:bg-stone-850 transition-colors">
-            {/* Mannequin / T-shirt Vector Placeholder */}
-            <svg viewBox="0 0 100 120" className="w-28 h-32 text-stone-700 group-hover:text-amber-400/80 transition-colors">
-              <path
-                d="M30 15 C 40 25, 60 25, 70 15 L 90 30 L 80 50 L 72 45 L 72 105 C 72 108, 70 110, 68 110 L 32 110 C 30 110, 28 108, 28 105 L 28 45 L 20 50 L 10 30 Z"
-                fill="currentColor"
-                stroke="#444444"
-                strokeWidth="1.5"
-              />
-              <path d="M38 15 C 44 24, 56 24, 62 15" fill="none" stroke="#262626" strokeWidth="2.5" />
-            </svg>
-            <div className="absolute bottom-6 px-3 py-1 bg-stone-950/80 border border-stone-800 rounded-full text-[10px] font-mono text-stone-400 group-hover:text-amber-300 transition-colors">
-              WISDOM · Photo à venir
-            </div>
-          </div>
-        )}
+        <img
+          src={displayImage}
+          alt={product.name}
+          loading="lazy"
+          decoding="async"
+          onError={(e) => handleImageError(e, DEFAULT_BLACK_SHIRT)}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+          referrerPolicy="no-referrer"
+        />
 
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity" />
@@ -161,7 +149,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
 
           <button
-            onClick={() => onAddToCart(product)}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onAddToCart(product);
+            }}
             className="px-3.5 py-2 bg-stone-800 hover:bg-amber-400 hover:text-stone-950 text-stone-100 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer border border-stone-700 hover:border-amber-400"
           >
             <ShoppingBag className="w-3.5 h-3.5" />

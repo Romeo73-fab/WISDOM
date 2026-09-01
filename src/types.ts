@@ -100,6 +100,7 @@ export interface Review {
 
 export interface StoreSettings {
   logoUrl?: string;
+  appIconUrl?: string;
   heroTitle?: string;
   heroSubtitle?: string;
   heroBgType?: 'image' | 'video';

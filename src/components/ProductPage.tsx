@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Product, Review } from '../types';
 import { COLOR_SWATCHES, ALL_SIZES } from '../data/initialData';
+import { sanitizeImageUrl, handleImageError, DEFAULT_BLACK_SHIRT } from '../utils/imageHelpers';
 
 interface ProductPageProps {
   product: Product;
@@ -86,7 +87,10 @@ export const ProductPage: React.FC<ProductPageProps> = ({
   onAddReview,
 }) => {
   // Gallery & media management
-  const images = [product.image, ...(product.gallery || [])].filter(Boolean);
+  const rawImages = [product.image, ...(product.gallery || [])].filter(Boolean);
+  const images = (rawImages.length > 0 ? rawImages : [DEFAULT_BLACK_SHIRT]).map((img) =>
+    sanitizeImageUrl(img, DEFAULT_BLACK_SHIRT)
+  );
   const videoData = parseVideoUrl(product.videoUrl);
   const hasVideo = videoData.type !== 'none';
 
@@ -291,6 +295,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                   <img
                     src={images[activeImgIndex]}
                     alt={`${product.name} - Vue ${activeImgIndex + 1}`}
+                    onError={(e) => handleImageError(e, DEFAULT_BLACK_SHIRT)}
                     className="w-full h-full object-contain filter drop-shadow-2xl transition-transform duration-300 group-hover:scale-[1.02]"
                     referrerPolicy="no-referrer"
                   />
@@ -336,6 +341,7 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                     <img
                       src={img}
                       alt={`Miniature ${idx + 1}`}
+                      onError={(e) => handleImageError(e, DEFAULT_BLACK_SHIRT)}
                       className="w-full h-full object-contain"
                       referrerPolicy="no-referrer"
                     />
@@ -839,8 +845,9 @@ export const ProductPage: React.FC<ProductPageProps> = ({
                 >
                   <div className="relative aspect-[4/5] bg-stone-950 p-2 overflow-hidden flex items-center justify-center">
                     <img
-                      src={rel.image}
+                      src={sanitizeImageUrl(rel.image, DEFAULT_BLACK_SHIRT)}
                       alt={rel.name}
+                      onError={(e) => handleImageError(e, DEFAULT_BLACK_SHIRT)}
                       className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                       referrerPolicy="no-referrer"
                     />

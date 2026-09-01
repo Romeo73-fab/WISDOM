@@ -2,6 +2,12 @@ import React from 'react';
 import sleeveDefaultImg from '../assets/images/wisdom_sleeve_patch_1787825766441.jpg';
 import chestDefaultImg from '../assets/images/wisdom_chest_logo_1787825785711.jpg';
 import { StoreSettings } from '../types';
+import {
+  sanitizeImageUrl,
+  handleImageError,
+  DEFAULT_SLEEVE_PATCH,
+  DEFAULT_CHEST_LOGO,
+} from '../utils/imageHelpers';
 
 interface BrandShowcaseSectionProps {
   settings?: StoreSettings;
@@ -12,8 +18,8 @@ export const BrandShowcaseSection: React.FC<BrandShowcaseSectionProps> = ({
   settings,
   onExploreClick,
 }) => {
-  const sleeveImg = settings?.showcaseSleeveImageUrl || sleeveDefaultImg;
-  const chestImg = settings?.showcaseChestImageUrl || chestDefaultImg;
+  const sleeveImg = sanitizeImageUrl(settings?.showcaseSleeveImageUrl, sleeveDefaultImg || DEFAULT_SLEEVE_PATCH);
+  const chestImg = sanitizeImageUrl(settings?.showcaseChestImageUrl, chestDefaultImg || DEFAULT_CHEST_LOGO);
 
   return (
     <section className="bg-stone-950 border-t border-stone-800/80 py-12 sm:py-16 relative overflow-hidden">
@@ -38,75 +44,75 @@ export const BrandShowcaseSection: React.FC<BrandShowcaseSectionProps> = ({
               Chez <strong className="text-stone-100 font-semibold">WISDOM</strong>, chaque pièce est taillée dans un coton lourd de qualité supérieure. Une confection soignée associant confort streetwear moderne et authenticité locale.
             </p>
 
-            {/* Zone Certificats Sans Boîte Englobante - Plus Grands et Rapprochés */}
+            {/* Zone Certificats Sans Boîte Englobante - Alignés sur une seule ligne sur mobile et desktop */}
             <div className="pt-2">
               <span className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider block mb-3">
                 Labels et certifications
               </span>
               
-              <div className="flex items-center gap-6 sm:gap-8 flex-wrap">
+              <div className="grid grid-cols-3 gap-2 sm:gap-6 items-center w-full max-w-xl">
                 
                 {/* 1. ORIGINE WISDOM GARANTIE */}
-                <div className="flex items-center gap-2 select-none">
+                <div className="flex items-center justify-center gap-1 sm:gap-2 select-none">
                   <div className="flex flex-col items-center">
-                    <div className="flex gap-1 mb-1">
-                      <span className="w-1 h-2.5 bg-amber-400 transform -skew-x-12 inline-block"></span>
-                      <span className="w-1 h-2.5 bg-amber-400 transform -skew-x-12 inline-block"></span>
+                    <div className="flex gap-0.5 sm:gap-1 mb-0.5 sm:mb-1">
+                      <span className="w-0.5 sm:w-1 h-2 sm:h-2.5 bg-amber-400 transform -skew-x-12 inline-block"></span>
+                      <span className="w-0.5 sm:w-1 h-2 sm:h-2.5 bg-amber-400 transform -skew-x-12 inline-block"></span>
                     </div>
-                    <div className="border-t-2 border-b-2 border-stone-500 py-1 px-2 text-center">
-                      <span className="text-[7.5px] font-mono tracking-widest block text-stone-400 leading-tight">ORIGINE</span>
-                      <span className="text-sm sm:text-base font-serif font-black tracking-wider block text-stone-100 uppercase leading-none my-0.5">WISDOM®</span>
-                      <span className="text-[7.5px] font-mono tracking-widest block text-amber-400 font-bold leading-tight">GARANTIE</span>
+                    <div className="border-t sm:border-t-2 border-b sm:border-b-2 border-stone-500 py-0.5 sm:py-1 px-1 sm:px-2 text-center">
+                      <span className="text-[6.5px] sm:text-[7.5px] font-mono tracking-widest block text-stone-400 leading-tight">ORIGINE</span>
+                      <span className="text-xs sm:text-base font-serif font-black tracking-wider block text-stone-100 uppercase leading-none my-0.5">WISDOM®</span>
+                      <span className="text-[6.5px] sm:text-[7.5px] font-mono tracking-widest block text-amber-400 font-bold leading-tight">GARANTIE</span>
                     </div>
-                    <div className="flex gap-1 mt-1">
-                      <span className="w-1 h-2.5 bg-amber-400 transform -skew-x-12 inline-block"></span>
-                      <span className="w-1 h-2.5 bg-amber-400 transform -skew-x-12 inline-block"></span>
+                    <div className="flex gap-0.5 sm:gap-1 mt-0.5 sm:mt-1">
+                      <span className="w-0.5 sm:w-1 h-2 sm:h-2.5 bg-amber-400 transform -skew-x-12 inline-block"></span>
+                      <span className="w-0.5 sm:w-1 h-2 sm:h-2.5 bg-amber-400 transform -skew-x-12 inline-block"></span>
                     </div>
                   </div>
-                  <span className="text-[9px] font-mono text-stone-400 [writing-mode:vertical-rl] transform rotate-180 tracking-tight leading-none">
+                  <span className="text-[7.5px] sm:text-[9px] font-mono text-stone-400 [writing-mode:vertical-rl] transform rotate-180 tracking-tight leading-none">
                     Cotonou · BJ
                   </span>
                 </div>
 
                 {/* 2. BOUTIQUE AU BÉNIN */}
-                <div className="flex flex-col items-center text-center select-none">
-                  <div className="w-8 h-8 mb-1 flex items-center justify-center">
-                    <svg className="w-7 h-7 text-stone-200" viewBox="0 0 24 24" fill="currentColor">
+                <div className="flex flex-col items-center text-center justify-center select-none">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 mb-0.5 sm:mb-1 flex items-center justify-center">
+                    <svg className="w-5 h-5 sm:w-7 sm:h-7 text-stone-200" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 8 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8zm0 11c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-[9px] font-mono font-bold tracking-tight text-stone-300 uppercase leading-none">
+                    <p className="text-[7.5px] sm:text-[9px] font-mono font-bold tracking-tight text-stone-300 uppercase leading-none">
                       BOUTIQUE
                     </p>
-                    <p className="text-[11px] font-mono font-extrabold tracking-wider text-amber-400 uppercase leading-tight mt-0.5">
+                    <p className="text-[9px] sm:text-[11px] font-mono font-extrabold tracking-wider text-amber-400 uppercase leading-tight mt-0.5">
                       AU BÉNIN
                     </p>
                   </div>
-                  <span className="text-[8px] font-mono text-stone-400 mt-1 block">
+                  <span className="text-[7px] sm:text-[8px] font-mono text-stone-400 mt-0.5 block">
                     Atelier Local
                   </span>
                 </div>
 
                 {/* 3. ORGANIC 100 COTON STANDARD - Clear & Legible Design */}
-                <div className="flex items-center gap-2.5 select-none">
-                  <div className="w-11 h-11 rounded-full border-2 border-amber-400 bg-stone-900 flex flex-col items-center justify-center p-1 shadow-md flex-shrink-0">
-                    <svg className="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2.5 select-none">
+                  <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-full border border-amber-400 sm:border-2 bg-stone-900 flex flex-col items-center justify-center p-0.5 sm:p-1 shadow-md flex-shrink-0">
+                    <svg className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2.25-13 3.25S2 11.5 2 13.5s1.75 3.75 1.75 3.75C7 8 17 8 17 8z" />
                     </svg>
-                    <span className="text-[7px] font-mono font-black text-stone-100 tracking-tight leading-none mt-0.5">
+                    <span className="text-[5.5px] sm:text-[7px] font-mono font-black text-stone-100 tracking-tight leading-none mt-0.5">
                       100%
                     </span>
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-[10px] font-mono font-black text-amber-400 uppercase tracking-wide leading-tight">
+                    <span className="text-[7.5px] sm:text-[10px] font-mono font-black text-amber-400 uppercase tracking-wide leading-tight">
                       ORGANIC 100
                     </span>
-                    <span className="text-xs font-serif font-black text-stone-100 uppercase tracking-tight leading-tight">
+                    <span className="text-[9px] sm:text-xs font-serif font-black text-stone-100 uppercase tracking-tight leading-tight">
                       COTON BIO
                     </span>
-                    <span className="text-[9px] font-mono text-stone-400 tracking-tight leading-tight">
-                      240g/m² · Standard
+                    <span className="text-[7px] sm:text-[9px] font-mono text-stone-400 tracking-tight leading-tight">
+                      240g/m²
                     </span>
                   </div>
                 </div>
@@ -144,6 +150,7 @@ export const BrandShowcaseSection: React.FC<BrandShowcaseSectionProps> = ({
                     <img
                       src={sleeveImg}
                       alt="Logo Manche WISDOM"
+                      onError={(e) => handleImageError(e, DEFAULT_SLEEVE_PATCH)}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       referrerPolicy="no-referrer"
                     />
@@ -167,6 +174,7 @@ export const BrandShowcaseSection: React.FC<BrandShowcaseSectionProps> = ({
                     <img
                       src={chestImg}
                       alt="Logo Poitrine WISDOM"
+                      onError={(e) => handleImageError(e, DEFAULT_CHEST_LOGO)}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       referrerPolicy="no-referrer"
                     />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import { Product } from '../types';
+import { sanitizeImageUrl, handleImageError, DEFAULT_BLACK_SHIRT } from '../utils/imageHelpers';
 
 interface WishlistDrawerProps {
   isOpen: boolean;
@@ -62,47 +63,51 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
                 </p>
               </div>
             ) : (
-              wishlistProducts.map((p) => (
-                <div
-                  key={p.id}
-                  className="p-4 bg-stone-950 border border-stone-800 rounded-2xl flex gap-4 items-center justify-between"
-                >
-                  <img
-                    src={p.image}
-                    alt={p.name}
-                    className="w-16 h-20 object-cover rounded-xl bg-stone-900 flex-shrink-0"
-                    referrerPolicy="no-referrer"
-                  />
+              wishlistProducts.map((p) => {
+                const img = sanitizeImageUrl(p.image, DEFAULT_BLACK_SHIRT);
+                return (
+                  <div
+                    key={p.id}
+                    className="p-4 bg-stone-950 border border-stone-800 rounded-2xl flex gap-4 items-center justify-between"
+                  >
+                    <img
+                      src={img}
+                      alt={p.name}
+                      onError={(e) => handleImageError(e, DEFAULT_BLACK_SHIRT)}
+                      className="w-16 h-20 object-cover rounded-xl bg-stone-900 flex-shrink-0"
+                      referrerPolicy="no-referrer"
+                    />
 
-                  <div className="flex-1 space-y-1">
-                    <h4 className="font-serif font-bold text-sm text-stone-100 line-clamp-1">
-                      {p.name}
-                    </h4>
-                    <p className="font-serif text-amber-300 font-bold text-sm">
-                      {p.price.toLocaleString('fr-FR')} FCFA
-                    </p>
+                    <div className="flex-1 space-y-1">
+                      <h4 className="font-serif font-bold text-sm text-stone-100 line-clamp-1">
+                        {p.name}
+                      </h4>
+                      <p className="font-serif text-amber-300 font-bold text-sm">
+                        {p.price.toLocaleString('fr-FR')} FCFA
+                      </p>
+
+                      <button
+                        onClick={() => {
+                          onAddToCart(p);
+                          onRemoveFromWishlist(p.id);
+                        }}
+                        className="mt-1 px-3 py-1 bg-stone-800 hover:bg-amber-400 hover:text-stone-950 text-stone-200 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer flex items-center gap-1"
+                      >
+                        <ShoppingBag className="w-3 h-3" />
+                        <span>Ajouter au panier</span>
+                      </button>
+                    </div>
 
                     <button
-                      onClick={() => {
-                        onAddToCart(p);
-                        onRemoveFromWishlist(p.id);
-                      }}
-                      className="mt-1 px-3 py-1 bg-stone-800 hover:bg-amber-400 hover:text-stone-950 text-stone-200 rounded-lg text-xs font-mono font-bold transition-colors cursor-pointer flex items-center gap-1"
+                      onClick={() => onRemoveFromWishlist(p.id)}
+                      className="p-2 text-stone-500 hover:text-red-400 cursor-pointer"
+                      title="Retirer"
                     >
-                      <ShoppingBag className="w-3 h-3" />
-                      <span>Ajouter au panier</span>
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-
-                  <button
-                    onClick={() => onRemoveFromWishlist(p.id)}
-                    className="p-2 text-stone-500 hover:text-red-400 cursor-pointer"
-                    title="Retirer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

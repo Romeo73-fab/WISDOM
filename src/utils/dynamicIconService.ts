@@ -5,12 +5,13 @@
  * 2. On the mobile / desktop home screen icon when installed as a PWA (on a black background)
  */
 
-export function updateAppIconsAndManifest(logoUrl?: string) {
+export function updateAppIconsAndManifest(logoUrl?: string, appIconUrl?: string) {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
+  const resolvedIcon = appIconUrl && appIconUrl.trim() ? appIconUrl.trim() : (logoUrl && logoUrl.trim() ? logoUrl.trim() : '/logo-wisdom.png');
   const resolvedLogo = logoUrl && logoUrl.trim() ? logoUrl.trim() : '/logo-wisdom.png';
 
-  // 1. Update or create Favicon elements
+  // 1. Update or create Favicon & Touch Icon elements
   const iconRelList = ['icon', 'shortcut icon', 'apple-touch-icon', 'apple-touch-icon-precomposed'];
 
   iconRelList.forEach((rel) => {
@@ -20,13 +21,13 @@ export function updateAppIconsAndManifest(logoUrl?: string) {
       link.rel = rel;
       document.head.appendChild(link);
     }
-    link.href = resolvedLogo;
+    link.href = resolvedIcon;
   });
 
   // Also specifically update any sizes-based apple-touch-icon
   const appleTouchIcons = document.querySelectorAll<HTMLLinkElement>('link[rel="apple-touch-icon"]');
   appleTouchIcons.forEach((iconLink) => {
-    iconLink.href = resolvedLogo;
+    iconLink.href = resolvedIcon;
   });
 
   // 2. Dynamically update or create Web App Manifest
@@ -36,14 +37,39 @@ export function updateAppIconsAndManifest(logoUrl?: string) {
       name: 'WISDOM — Application Officielle',
       icons: [
         {
+          src: resolvedIcon,
+          sizes: '192x192',
+          type: resolvedIcon.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
+          purpose: 'any',
+        },
+        {
+          src: resolvedIcon,
+          sizes: '192x192',
+          type: resolvedIcon.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
+          purpose: 'maskable',
+        },
+        {
+          src: resolvedIcon,
+          sizes: '512x512',
+          type: resolvedIcon.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
+          purpose: 'any',
+        },
+        {
+          src: resolvedIcon,
+          sizes: '512x512',
+          type: resolvedIcon.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
+          purpose: 'maskable',
+        },
+        {
           src: resolvedLogo,
-          sizes: '64x64 128x128 192x192 256x256 512x512',
+          sizes: '512x512',
           type: resolvedLogo.endsWith('.svg') ? 'image/svg+xml' : 'image/png',
-          purpose: 'any maskable',
+          purpose: 'any',
         },
       ],
       id: '/',
       start_url: '/',
+      scope: '/',
       background_color: '#0C0A09',
       theme_color: '#0C0A09',
       display: 'standalone',

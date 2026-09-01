@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { ArrowRight, ShieldCheck, Truck, Palette, Award } from 'lucide-react';
 import { StoreSettings } from '../types';
+import { sanitizeImageUrl, handleImageError, DEFAULT_HERO_BANNER } from '../utils/imageHelpers';
 
 interface HeroProps {
   settings: StoreSettings;
@@ -16,6 +17,8 @@ export const Hero: React.FC<HeroProps> = ({ settings, onExploreClick, onLabClick
       : settings.heroBgType === 'image'
       ? false
       : Boolean(settings.heroVideoUrl);
+
+  const heroImageSrc = sanitizeImageUrl(settings.heroImageUrl, DEFAULT_HERO_BANNER);
 
   return (
     <div className="relative w-full overflow-hidden bg-stone-950 text-stone-100 border-b border-stone-800">
@@ -34,26 +37,17 @@ export const Hero: React.FC<HeroProps> = ({ settings, onExploreClick, onLabClick
             />
             <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-stone-950/70" />
           </div>
-        ) : settings.heroImageUrl ? (
-          <div className="absolute inset-0 w-full h-full">
-            <img
-              src={settings.heroImageUrl}
-              alt="Wisdom Banner"
-              className="w-full h-full object-cover opacity-50 filter brightness-90 saturate-110"
-              referrerPolicy="no-referrer"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-stone-950/70" />
-          </div>
         ) : (
           <div className="absolute inset-0 w-full h-full">
             <img
-              src="/assets/images/wisdom_hero_banner_1786398469341.jpg"
+              src={heroImageSrc}
               alt="Wisdom Banner"
+              loading="eager"
+              decoding="async"
+              // @ts-ignore
+              fetchpriority="high"
               className="w-full h-full object-cover opacity-50 filter brightness-90 saturate-110"
-              onError={(e) => {
-                // If local path fails, fallback to elegant ambient background
-                (e.target as HTMLElement).style.display = 'none';
-              }}
+              onError={(e) => handleImageError(e, DEFAULT_HERO_BANNER)}
               referrerPolicy="no-referrer"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-stone-950/70" />

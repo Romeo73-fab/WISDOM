@@ -32,6 +32,7 @@ export const ALL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 
 export const DEFAULT_SETTINGS: StoreSettings = {
   logoUrl: '/logo-wisdom.png',
+  appIconUrl: '/logo-wisdom.png',
   heroVideoUrl: '',
   heroImageUrl: heroBannerImg,
   showcaseSleeveImageUrl: sleeveModelImg,
