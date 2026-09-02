@@ -1,9 +1,9 @@
 import { Product, StoreSettings, Review, PromoCode } from '../types';
-import heroBannerImg from '../assets/images/wisdom_hero_banner_1786398469341.jpg';
-import blackShirtImg from '../assets/images/wisdom_black_shirt_1786398483035.jpg';
-import whiteShirtImg from '../assets/images/wisdom_white_shirt_1786398496994.jpg';
-import sleeveModelImg from '../assets/images/wisdom_sleeve_patch_1787825766441.jpg';
-import chestModelImg from '../assets/images/wisdom_chest_logo_1787825785711.jpg';
+import heroBannerImg from '../assets/images/wisdom_hero_banner_1786398469341.webp';
+import blackShirtImg from '../assets/images/wisdom_black_shirt_1786398483035.webp';
+import whiteShirtImg from '../assets/images/wisdom_white_shirt_1786398496994.webp';
+import sleeveModelImg from '../assets/images/wisdom_sleeve_patch_1787825766441.webp';
+import chestModelImg from '../assets/images/wisdom_chest_logo_1787825785711.webp';
 
 export const DEFAULT_WHATSAPP = '22960413145';
 

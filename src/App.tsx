@@ -55,7 +55,16 @@ import { updateAppIconsAndManifest } from './utils/dynamicIconService';
 
 export default function App() {
   // Main Data States
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const cached = localStorage.getItem(PRODUCTS_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return DEFAULT_PRODUCTS;
+  });
   const [orders, setOrders] = useState<Order[]>([]);
   const [usersList, setUsersList] = useState<User[]>([]);
   const [settings, setSettings] = useState<StoreSettings>(() => {
@@ -106,10 +115,14 @@ export default function App() {
   useEffect(() => {
     async function loadAllData() {
       // 1. Try fetching live database from server API
-      const serverData = await fetchServerStoreData();
+      const serverData = await fetchServerStoreData(true);
       if (serverData) {
         if (serverData.products && serverData.products.length > 0) {
-          setProducts(serverData.products);
+          setProducts((prev) => {
+            // Avoid unnecessary re-renders if products are identical
+            if (JSON.stringify(prev) === JSON.stringify(serverData.products)) return prev;
+            return serverData.products;
+          });
           setItem(PRODUCTS_KEY, serverData.products);
         }
         if (serverData.orders) {
@@ -121,7 +134,7 @@ export default function App() {
           setItem(USERS_KEY, serverData.users);
         }
         if (serverData.settings) {
-          setSettings(serverData.settings);
+          setSettings((prev) => ({ ...prev, ...serverData.settings }));
           setItem(SETTINGS_KEY, serverData.settings);
         }
         if (serverData.reviews) {
@@ -134,7 +147,7 @@ export default function App() {
       } else {
         // Fallback to local storage if offline
         const loadedProds = await getItem<Product[]>(PRODUCTS_KEY, DEFAULT_PRODUCTS);
-        setProducts(loadedProds);
+        setProducts((prev) => (prev && prev.length > 0 ? prev : loadedProds));
 
         const loadedOrders = await getItem<Order[]>(ORDERS_KEY, []);
         setOrders(loadedOrders);
@@ -143,7 +156,7 @@ export default function App() {
         setUsersList(loadedUsers);
 
         const loadedSettings = await getItem<StoreSettings>(SETTINGS_KEY, DEFAULT_SETTINGS);
-        setSettings(loadedSettings);
+        setSettings((prev) => ({ ...DEFAULT_SETTINGS, ...loadedSettings, ...prev }));
 
         const loadedPromos = await getItem<PromoCode[]>(PROMOS_KEY, DEFAULT_PROMOS);
         setPromos(loadedPromos);

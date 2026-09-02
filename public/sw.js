@@ -1,5 +1,5 @@
 // WISDOM Official PWA Service Worker - High Performance Image & Static Caching
-const CACHE_NAME = 'wisdom-pwa-cache-v3';
+const CACHE_NAME = 'wisdom-pwa-cache-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -9,6 +9,11 @@ const STATIC_ASSETS = [
   '/logo-wisdom.png',
   '/pwa-192x192.png',
   '/pwa-512x512.png',
+  '/wisdom_hero_banner_1786398469341.webp',
+  '/wisdom_black_shirt_1786398483035.webp',
+  '/wisdom_white_shirt_1786398496994.webp',
+  '/wisdom_sleeve_patch_1787825766441.webp',
+  '/wisdom_chest_logo_1787825785711.webp',
   '/wisdom_hero_banner_1786398469341.jpg',
   '/wisdom_black_shirt_1786398483035.jpg',
   '/wisdom_white_shirt_1786398496994.jpg',

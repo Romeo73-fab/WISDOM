@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Heart, ShoppingBag, Sparkles, SlidersHorizontal } from 'lucide-react';
 import { Product } from '../types';
 import { COLOR_SWATCHES } from '../data/initialData';
@@ -19,6 +19,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onAddToCart,
   onSelectProduct,
 }) => {
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
   const displayImage = sanitizeImageUrl(product.image, DEFAULT_BLACK_SHIRT);
 
   return (
@@ -28,13 +29,28 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         onClick={() => onSelectProduct(product)}
         className="relative aspect-[4/5] bg-stone-950 overflow-hidden cursor-pointer"
       >
+        {/* Skeleton loading animation until image is fully decoded */}
+        {!isImageLoaded && (
+          <div className="absolute inset-0 bg-stone-900 animate-pulse flex items-center justify-center">
+            <span className="text-xs font-mono tracking-widest text-stone-700 font-bold uppercase">
+              WISDOM
+            </span>
+          </div>
+        )}
+
         <img
           src={displayImage}
           alt={product.name}
           loading="lazy"
           decoding="async"
-          onError={(e) => handleImageError(e, DEFAULT_BLACK_SHIRT)}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+          onLoad={() => setIsImageLoaded(true)}
+          onError={(e) => {
+            setIsImageLoaded(true);
+            handleImageError(e, DEFAULT_BLACK_SHIRT);
+          }}
+          className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-500 ease-out ${
+            isImageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+          }`}
           referrerPolicy="no-referrer"
         />
 

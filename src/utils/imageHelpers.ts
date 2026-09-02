@@ -2,11 +2,11 @@ import React from 'react';
 
 // Robust Image Helpers & Bulletproof Fallbacks for Cross-Device Presentation
 
-export const DEFAULT_BLACK_SHIRT = '/assets/images/wisdom_black_shirt_1786398483035.jpg';
-export const DEFAULT_WHITE_SHIRT = '/assets/images/wisdom_white_shirt_1786398496994.jpg';
-export const DEFAULT_HERO_BANNER = '/assets/images/wisdom_hero_banner_1786398469341.jpg';
-export const DEFAULT_SLEEVE_PATCH = '/assets/images/wisdom_sleeve_patch_1787825766441.jpg';
-export const DEFAULT_CHEST_LOGO = '/assets/images/wisdom_chest_logo_1787825785711.jpg';
+export const DEFAULT_BLACK_SHIRT = '/wisdom_black_shirt_1786398483035.webp';
+export const DEFAULT_WHITE_SHIRT = '/wisdom_white_shirt_1786398496994.webp';
+export const DEFAULT_HERO_BANNER = '/wisdom_hero_banner_1786398469341.webp';
+export const DEFAULT_SLEEVE_PATCH = '/wisdom_sleeve_patch_1787825766441.webp';
+export const DEFAULT_CHEST_LOGO = '/wisdom_chest_logo_1787825785711.webp';
 export const DEFAULT_LOGO = '/logo-wisdom.png';
 
 // Elegant SVG data URI fallback if an image fails to load
