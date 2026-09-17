@@ -39,6 +39,23 @@ export const Header: React.FC<HeaderProps> = ({
   const [showDrawerMenu, setShowDrawerMenu] = useState(false);
   const [showInstallModal, setShowInstallModal] = useState(false);
 
+  const handleDownloadClick = async () => {
+    const promptEvent = (window as any).__pwaInstallPrompt;
+    if (promptEvent) {
+      try {
+        promptEvent.prompt();
+        const { outcome } = await promptEvent.userChoice;
+        if (outcome === 'accepted') {
+          (window as any).__pwaInstallPrompt = null;
+        }
+      } catch (err) {
+        setShowInstallModal(true);
+      }
+    } else {
+      setShowInstallModal(true);
+    }
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 15);
@@ -171,6 +188,17 @@ export const Header: React.FC<HeaderProps> = ({
                     {wishlistCount}
                   </span>
                 )}
+              </button>
+
+              {/* Permanent Download / Install App Button */}
+              <button
+                onClick={handleDownloadClick}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-stone-900/90 hover:bg-amber-400/15 border border-stone-800 hover:border-amber-400/50 text-stone-200 hover:text-amber-300 text-xs font-mono transition-all cursor-pointer group shadow-sm"
+                title="Télécharger / Installer l'application WISDOM sur votre écran d'accueil"
+                aria-label="Télécharger l'application"
+              >
+                <Download className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span className="hidden sm:inline font-semibold">Télécharger</span>
               </button>
 
               {/* Account / Connexion */}

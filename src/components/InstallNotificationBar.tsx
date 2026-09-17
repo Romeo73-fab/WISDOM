@@ -15,7 +15,9 @@ export const InstallNotificationBar: React.FC<InstallNotificationBarProps> = ({
   onOpenInstallModal,
   onShowToast,
 }) => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(() => 
+    typeof window !== 'undefined' ? (window as any).__pwaInstallPrompt : null
+  );
   const [isDismissed, setIsDismissed] = useState<boolean>(false);
   const [isInstalled, setIsInstalled] = useState<boolean>(false);
   const [isIos, setIsIos] = useState<boolean>(false);
@@ -44,9 +46,17 @@ export const InstallNotificationBar: React.FC<InstallNotificationBarProps> = ({
       setIsIos(/iphone|ipad|ipod/.test(ua));
     }
 
-    // Listen for beforeinstallprompt
+    // Listen for custom pwa-installable and beforeinstallprompt
+    const handlePwaReady = () => {
+      if ((window as any).__pwaInstallPrompt) {
+        setDeferredPrompt((window as any).__pwaInstallPrompt);
+      }
+    };
+    window.addEventListener('pwa-installable', handlePwaReady);
+
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
+      (window as any).__pwaInstallPrompt = e;
       setDeferredPrompt(e);
     };
 
@@ -54,6 +64,7 @@ export const InstallNotificationBar: React.FC<InstallNotificationBarProps> = ({
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('pwa-installable', handlePwaReady);
     };
   }, []);
 

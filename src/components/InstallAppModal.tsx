@@ -15,7 +15,9 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
   appIconUrl,
   onClose,
 }) => {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(() => 
+    typeof window !== 'undefined' ? (window as any).__pwaInstallPrompt : null
+  );
   const [isIos, setIsIos] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
@@ -33,8 +35,16 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
     }
 
     // Capture PWA install prompt for Android/Chrome/Desktop
+    const handlePwaReady = () => {
+      if ((window as any).__pwaInstallPrompt) {
+        setDeferredPrompt((window as any).__pwaInstallPrompt);
+      }
+    };
+    window.addEventListener('pwa-installable', handlePwaReady);
+
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
+      (window as any).__pwaInstallPrompt = e;
       setDeferredPrompt(e);
     };
 
@@ -42,6 +52,7 @@ export const InstallAppModal: React.FC<InstallAppModalProps> = ({
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('pwa-installable', handlePwaReady);
     };
   }, []);
 
